@@ -1,5 +1,4 @@
 from memory.state import GraphState
-from mcp_registry.tools import query_stock_footage, commit_memory
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
 import json
@@ -7,7 +6,7 @@ import json
 def character_node(state: GraphState) -> GraphState:
     """
     The LangGraph node for the Character Designer Agent.
-    Extracts character details from the generated script.
+    Dynamically extracts character details from the generated script.
     """
     print("--- [AGENT: CHARACTER DESIGNER] Extracting Identities ---")
     
@@ -19,55 +18,40 @@ def character_node(state: GraphState) -> GraphState:
     # 1. Initialize the LLM
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
     
-    # 2. Bind the MCP Tools 
-    tools = [query_stock_footage, commit_memory]
-    llm_with_tools = llm.bind_tools(tools)
-    
-    # 3. Define the System Prompt
+    # 2. Define the System Prompt with STRICT JSON rules
+    # 2. Define the System Prompt with an OBJECT at the root
     system_prompt = SystemMessage(
         content=(
             "You are an expert Character Designer Agent. "
-            "Your job is to read a script and extract formal character identities. "
-            "For each character, you must provide: Name, Personality traits, Appearance description, and a Reference style. "
-            "You can use the query_stock_footage tool to generate visual references."
+            "Read the provided script and extract formal character identities. "
+            "You MUST return the output ONLY as a valid JSON object. Do not include any conversational text or markdown. "
+            "You MUST use double quotes for all keys. Avoid using quotes inside the descriptions. "
+            "Structure it exactly like this: "
+            '{"characters": [{"name": "...", "personality_traits": ["...", "..."], "appearance_description": "...", "reference_style": "..."}]}'
         )
     )
     
-    # 4. Execute the Reasoning Loop 
-    script_content = json.dumps(script_data)
-    messages = [system_prompt, HumanMessage(content=f"Extract characters from this script: {script_content}")]
-    
-    # The LLM processes the script
+    # 3. Execute the Reasoning Loop 
     script_content = json.dumps(script_data)
     messages = [system_prompt, HumanMessage(content=f"Extract characters from this script: {script_content}")]
     
     try:
-        # The LLM attempts to process the script and call tools
-        response = llm_with_tools.invoke(messages)
+        response = llm.invoke(messages)
+        content = response.content.replace("```json", "").replace("```", "").strip()
+        
+        # Parse the JSON Object
+        parsed_json = json.loads(content)
+        
+        # Extract the array from inside the "characters" key!
+        extracted_characters = parsed_json.get("characters", [])
+        
+        print("--- [AGENT: CHARACTER DESIGNER] Identities Formalized ---")
+        
+        state["characters"] = extracted_characters
+        state["status"] = "characters_designed"
+        
     except Exception as e:
-        print("    [API Parsing Error caught: Proceeding with state update]")
-    
-    # 5. Process the Output and Update State
-    # Simulating the structured extraction for our state
-    print("--- [AGENT: CHARACTER DESIGNER] Identities Formalized ---")
-    
-    extracted_characters = [
-        {
-            "name": "Alice",
-            "personality_traits": ["Analytical", "Tense", "Determined"],
-            "appearance_description": "Late 20s, sharp features, wearing a dark tech-wear jacket.",
-            "reference_style": "Cyberpunk, cinematic lighting, high contrast"
-        },
-        {
-            "name": "Bob",
-            "personality_traits": ["Calm", "Supportive", "Experienced"],
-            "appearance_description": "Mid 40s, greying beard, wearing a casual flannel.",
-            "reference_style": "Cyberpunk, muted colors, soft focus"
-        }
-    ]
-    
-    # Update the shared state with the new character data [cite: 198]
-    state["characters"] = extracted_characters
-    state["status"] = "characters_designed"
-    
+        print(f"--- [AGENT: CHARACTER DESIGNER] Failed to parse characters: {e} ---")
+        state["status"] = "character_extraction_failed"
+        
     return state

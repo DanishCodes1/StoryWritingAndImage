@@ -30,7 +30,7 @@ def commit_state_to_db(state: dict) -> dict:
         # Deliverable: scene_manifest.json [cite: 212]
         with open("output/scene_manifest.json", "w") as f:
             json.dump(state["script"], f, indent=4)
-        print("💾 Script saved to Vector DB and output/scene_manifest.json")
+        print("Script saved to Vector DB and output/scene_manifest.json")
 
     # 2. Save Character Metadata to ChromaDB
     if "characters" in state and state["characters"]:
@@ -45,7 +45,7 @@ def commit_state_to_db(state: dict) -> dict:
         # Deliverable: character_db.json [cite: 213]
         with open("output/character_db.json", "w") as f:
             json.dump(state["characters"], f, indent=4)
-        print(f"💾 {len(state['characters'])} characters saved to Vector DB and output/character_db.json")
+        print(f"{len(state['characters'])} characters saved to Vector DB and output/character_db.json")
 
     state["status"] = "memory_committed"
     print("--- [MEMORY LAYER] Commit Complete ---")

@@ -9,7 +9,9 @@ from agents.character_designer import character_node
 from agents.image_synthesizer import image_node
 # --- STUBS FOR UNWRITTEN AGENTS ---
 # We will fill these out in their respective files later.
-
+def mode_selector(state: GraphState) -> str:
+    # This reads the mode and routes the graph!
+    return state.get("input_mode", "auto")
 
 def memory_commit_node(state: GraphState):
     # Call the actual DB function we just wrote

@@ -18,10 +18,10 @@ def validator_node(state: GraphState) -> GraphState:
     system_prompt = SystemMessage(
         content=(
             "You are a Script Validator Agent. "
-            "Review the provided script and verify it contains: "
-            "1. Scene headers 2. Dialogue labels 3. Action structures. "
-            "If valid, return a JSON object with a 'scenes' array exactly like the standard format. "
-            "If invalid, return a JSON object with an 'error' key explaining what is missing."
+            "Review the provided script and verify it contains: 1. Scene headers 2. Dialogue labels 3. Action structures. "
+            "You MUST return the output ONLY as a valid JSON object. Do not include any conversational text, markdown, or code blocks. Use double quotes. "
+            'If valid, return: {"scenes": [...]} '
+            'If invalid, return: {"error": "explanation of what is missing"}'
         )
     )
     
