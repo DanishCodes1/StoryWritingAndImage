@@ -1,0 +1,8 @@
+langgraph
+langchain
+langchain-core
+langchain-community
+chromadb
+mcp  # Model Context Protocol Python SDK
+pydantic # For structuring the JSON outputs like scene_manifest.json [cite: 85-99]
+python-dotenv
